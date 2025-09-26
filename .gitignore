@@ -1,0 +1,8 @@
+*
+!*.*
+*.o
+
+!Makefile
+!Dockerfile
+
+.DS_Store
