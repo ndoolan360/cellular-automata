@@ -49,8 +49,10 @@ static struct {
 } OFFSETS[8] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0},
                 {1, 0},   {-1, 1}, {0, 1},  {1, 1}};
 
-static bool SURVIVE[9] = {false, false, true, true, false, false, false, false, false};
-static bool BIRTH[9] = {false, false, false, true, false, false, false, false, false};
+static bool SURVIVE[9] = {false, false, true,  true, false,
+                          false, false, false, false};
+static bool BIRTH[9] = {false, false, false, true, false,
+                        false, false, false, false};
 
 static QtNode *step(QtNode *root) {
   QtNode *new = gol_init(root->size);
@@ -104,62 +106,37 @@ void gol_step(QtNode **root_ptr) {
   *root_ptr = new_root;
 }
 
-void gol_get_all_alive_cells(QtNode *root, QtNode ***cells_ptr,
-size_t *cells_size_ptr, size_t *cell_count_ptr) {
-  int stack_head_index =
-      0; // when it's -1; then we're done processing the stack
-  size_t stack_height = 4;
-  QtNode **stack = (QtNode **)calloc(stack_height, sizeof(QtNode *));
-  stack[stack_head_index] = root;
-
-  while (stack_head_index >= 0 && stack[stack_head_index] != NULL) {
-    QtNode **cells = *cells_ptr;
-    size_t cells_size = *cells_size_ptr;
-    size_t cell_count = *cell_count_ptr;
-
-    // pop off the stack
-    QtNode *node = stack[stack_head_index];
-    stack_head_index -= 1;
-
-    // resize active_cells if needed
-    if (cell_count >= cells_size) {
-      size_t new_size = cells_size * 2;
-      void *tmp = realloc(cells, new_size * sizeof(QtNode *));
-      if (tmp == NULL) {
-        perror("realloc failed");
-        free(cells);
-        exit(EXIT_FAILURE);
-      }
-      (*cells_ptr) = tmp;
-
-      *cells_size_ptr = new_size;
-    }
-
-    // add the cell if it's active
-    if (node->data != NULL && ((cell_data_t *)node->data)->state == ALIVE) {
-      (*cells_ptr)[cell_count] = node;
-      *cell_count_ptr += 1;
-    }
-
-    // add children to stack
-    if (stack_head_index + 4 > (int)stack_height) {
-      size_t new_size = stack_height + 4;
-      void *tmp = realloc(stack, new_size * sizeof(QtNode *));
-      if (tmp == NULL) {
-        perror("realloc failed");
-        free(stack);
-        exit(EXIT_FAILURE);
-      }
-      stack = tmp;
-      stack_height = new_size;
-    }
-    for (int i = 0; i < 4; i++) {
-      if (node->children[i] != NULL) {
-        stack_head_index += 1;
-        stack[stack_head_index] = node->children[i];
-      }
-    }
+void gol_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
+                             size_t *cells_size_ptr, size_t *cell_count_ptr) {
+  if (node == NULL) {
+    return;
   }
 
-  free(stack);
+  QtNode **cells = *cells_ptr;
+  size_t cells_size = *cells_size_ptr;
+  size_t cell_count = *cell_count_ptr;
+
+  // resize cells as needed
+  if (cell_count >= cells_size) {
+    size_t new_size = cells_size * 2;
+    void *tmp = realloc(cells, new_size * sizeof(QtNode *));
+    if (tmp == NULL) {
+      perror("realloc failed");
+      free(cells);
+      exit(EXIT_FAILURE);
+    }
+    (*cells_ptr) = tmp;
+    *cells_size_ptr = new_size;
+  }
+
+  // add the cell if it's active
+  if (node->data != NULL && ((cell_data_t *)node->data)->state == ALIVE) {
+    (*cells_ptr)[cell_count] = node;
+    *cell_count_ptr += 1;
+  }
+
+  for (int i = 0; i < 4; i++) {
+    gol_get_all_alive_cells(node->children[i], cells_ptr, cells_size_ptr,
+                            cell_count_ptr);
+  }
 }

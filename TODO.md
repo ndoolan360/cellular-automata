@@ -1,4 +1,3 @@
 - auto run
   - fps limit
 - move camera around
-- simplify `gol_get_all_alive_cells`
