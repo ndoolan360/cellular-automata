@@ -55,22 +55,45 @@ static bool BIRTH[9] = {false, false, false, true, false, false, false, false, f
 static QtNode *step(QtNode *root) {
   QtNode *new = gol_init(root->size);
 
-  for (int y = 0; y < (int)root->size; y++) {
-    for (int x = 0; x < (int)root->size; x++) {
-      bool is_alive = gol_get_cell_data(root, x, y).state == ALIVE;
-      uint8_t neighbours = 0;
-      for (int i = 0; i < 8; i++) {
-        cell_data_t neighbour =
-            gol_get_cell_data(root, x + OFFSETS[i].dx, y + OFFSETS[i].dy);
-        neighbours += neighbour.state;
+  QtNode **cells = (QtNode **)calloc(32, sizeof(QtNode *));
+  size_t cell_count = 0;
+  size_t cells_size = 32;
+  gol_get_all_alive_cells(root, &cells, &cells_size, &cell_count);
+
+  for (size_t i = 0; i < cell_count; i++) {
+    QtNode *node = cells[i];
+    uint8_t neighbours = 0;
+    for (int i = 0; i < 8; i++) {
+      int neighbour_x = node->x + OFFSETS[i].dx;
+      int neighbour_y = node->y + OFFSETS[i].dy;
+      cell_data_t neighbour = gol_get_cell_data(root, neighbour_x, neighbour_y);
+      neighbours += neighbour.state;
+
+      uint8_t neighbour_neighbours = 0;
+      for (int j = 0; j < 8; j++) {
+        int neighbour_neighbour_x = neighbour_x + OFFSETS[j].dx;
+        int neighbour_neighbour_y = neighbour_y + OFFSETS[j].dy;
+        if (neighbour_neighbour_x == node->x &&
+            neighbour_neighbour_y == node->y) {
+          neighbour_neighbours += 1;
+        } else {
+          cell_data_t neighbour_neighbour = gol_get_cell_data(
+              root, neighbour_neighbour_x, neighbour_neighbour_y);
+          neighbour_neighbours += neighbour_neighbour.state;
+        }
       }
 
-      if ((BIRTH[neighbours] && !is_alive) ||
-          (SURVIVE[neighbours] && is_alive)) {
-        gol_set_cell_state(new, x, y, ALIVE);
+      if (BIRTH[neighbour_neighbours]) {
+        gol_set_cell_state(new, neighbour_x, neighbour_y, ALIVE);
       }
     }
+
+    if (SURVIVE[neighbours]) {
+      gol_set_cell_state(new, node->x, node->y, ALIVE);
+    }
   }
+
+  free(cells);
 
   return new;
 }
@@ -79,4 +102,64 @@ void gol_step(QtNode **root_ptr) {
   QtNode *new_root = step(*root_ptr);
   gol_free(*root_ptr);
   *root_ptr = new_root;
+}
+
+void gol_get_all_alive_cells(QtNode *root, QtNode ***cells_ptr,
+size_t *cells_size_ptr, size_t *cell_count_ptr) {
+  int stack_head_index =
+      0; // when it's -1; then we're done processing the stack
+  size_t stack_height = 4;
+  QtNode **stack = (QtNode **)calloc(stack_height, sizeof(QtNode *));
+  stack[stack_head_index] = root;
+
+  while (stack_head_index >= 0 && stack[stack_head_index] != NULL) {
+    QtNode **cells = *cells_ptr;
+    size_t cells_size = *cells_size_ptr;
+    size_t cell_count = *cell_count_ptr;
+
+    // pop off the stack
+    QtNode *node = stack[stack_head_index];
+    stack_head_index -= 1;
+
+    // resize active_cells if needed
+    if (cell_count >= cells_size) {
+      size_t new_size = cells_size * 2;
+      void *tmp = realloc(cells, new_size * sizeof(QtNode *));
+      if (tmp == NULL) {
+        perror("realloc failed");
+        free(cells);
+        exit(EXIT_FAILURE);
+      }
+      (*cells_ptr) = tmp;
+
+      *cells_size_ptr = new_size;
+    }
+
+    // add the cell if it's active
+    if (node->data != NULL && ((cell_data_t *)node->data)->state == ALIVE) {
+      (*cells_ptr)[cell_count] = node;
+      *cell_count_ptr += 1;
+    }
+
+    // add children to stack
+    if (stack_head_index + 4 > (int)stack_height) {
+      size_t new_size = stack_height + 4;
+      void *tmp = realloc(stack, new_size * sizeof(QtNode *));
+      if (tmp == NULL) {
+        perror("realloc failed");
+        free(stack);
+        exit(EXIT_FAILURE);
+      }
+      stack = tmp;
+      stack_height = new_size;
+    }
+    for (int i = 0; i < 4; i++) {
+      if (node->children[i] != NULL) {
+        stack_head_index += 1;
+        stack[stack_head_index] = node->children[i];
+      }
+    }
+  }
+
+  free(stack);
 }

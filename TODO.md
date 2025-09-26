@@ -1,4 +1,4 @@
 - auto run
   - fps limit
-- optimise quad tree traversal
 - move camera around
+- simplify `gol_get_all_alive_cells`

@@ -19,4 +19,6 @@ void gol_toggle_cell_state(QtNode *root, int x, int y);
 
 void gol_step(QtNode **root_ptr);
 
+void gol_get_all_alive_cells(QtNode *root, QtNode ***cells_ptr, size_t *cells_size_ptr, size_t *cell_count_ptr);
+
 #endif // GOL_H
