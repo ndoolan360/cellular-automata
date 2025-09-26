@@ -1,3 +1,2 @@
-- auto run
-  - fps limit
 - move camera around
+- control frame limit better
