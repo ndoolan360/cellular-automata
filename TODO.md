@@ -1,2 +1,0 @@
-- move camera around
-- control frame limit better
