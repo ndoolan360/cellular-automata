@@ -15,7 +15,8 @@ QtNode *gol_init(size_t size);
 void gol_free(QtNode *root);
 
 cell_data_t gol_get_cell_data(QtNode *root, int x, int y);
-void gol_set_cell_state(QtNode *root, int x, int y, cell_state_t state);
+void gol_toggle_cell_state(QtNode *root, int x, int y);
+
 void gol_step(QtNode **root_ptr);
 
 #endif // GOL_H

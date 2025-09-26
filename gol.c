@@ -20,7 +20,7 @@ cell_data_t gol_get_cell_data(QtNode *root, int x, int y) {
   return *(cell_data_t *)node->data;
 }
 
-void gol_set_cell_state(QtNode *root, int x, int y, cell_state_t state) {
+static void gol_set_cell_state(QtNode *root, int x, int y, cell_state_t state) {
   if (state == DEAD) {
     grid_remove_cell(root, x, y);
     return;
@@ -36,6 +36,11 @@ void gol_set_cell_state(QtNode *root, int x, int y, cell_state_t state) {
 
   data->state = state;
   node->data = data;
+}
+
+void gol_toggle_cell_state(QtNode *root, int x, int y) {
+  cell_data_t current = gol_get_cell_data(root, x, y);
+  gol_set_cell_state(root, x, y, current.state == ALIVE ? DEAD : ALIVE);
 }
 
 static struct {

@@ -1,6 +1,4 @@
-- mouse input to toggle cell
-- visual border
 - auto run
   - fps limit
-- debug info
 - optimise quad tree traversal
+- move camera around
