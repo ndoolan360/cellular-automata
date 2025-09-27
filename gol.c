@@ -145,6 +145,7 @@ ruleset parse_rule(char *rule_str) {
       break;
     case '/':
       break;
+    case '0':
     case '1':
     case '2':
     case '3':
@@ -153,20 +154,20 @@ ruleset parse_rule(char *rule_str) {
     case '6':
     case '7':
     case '8':
-      switch (last_letter) {
-      case 'B':
-        out.birth[rule_str[i] - '1'] = true;
-        goto next;
-      case 'S':
-        out.survive[rule_str[i] - '1'] = true;
-        goto next;
+      if (last_letter == 'B') {
+        out.birth[rule_str[i] - '0'] = true;
+      } else if (last_letter == 'S') {
+        out.survive[rule_str[i] - '0'] = true;
+      } else {
+        perror("unknown prior letter in rule");
+        exit(1);
       }
+      break;
     default:
       perror("unknown character in rule");
       exit(1);
     }
 
-  next:
     i++;
   }
 
