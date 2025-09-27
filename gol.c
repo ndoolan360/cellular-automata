@@ -132,12 +132,43 @@ void gol_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
   }
 }
 
-ruleset parse_rule(char *_) {
-  // TODO: implement properly
+ruleset parse_rule(char *rule_str) {
+  ruleset out = {0};
 
-  // B3/S23
-  return (ruleset){
-      .birth = {false, false, false, true, false, false, false, false, false},
-      .survive = {false, false, true, true, false, false, false, false, false},
-  };
+  size_t i = 0;
+  char last_letter;
+  while (rule_str[i] != '\0') {
+    switch (rule_str[i]) {
+    case 'B':
+    case 'S':
+      last_letter = rule_str[i];
+      break;
+    case '/':
+      break;
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+      switch (last_letter) {
+      case 'B':
+        out.birth[rule_str[i] - '1'] = true;
+        goto next;
+      case 'S':
+        out.survive[rule_str[i] - '1'] = true;
+        goto next;
+      }
+    default:
+      perror("unknown character in rule");
+      exit(1);
+    }
+
+  next:
+    i++;
+  }
+
+  return out;
 }

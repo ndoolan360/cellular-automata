@@ -4,7 +4,6 @@ An implementation of conways game of life.
 
 ### TODO
 
-- finish `ruleset parse_rule(char *rule_str)`...
 - control frame limit better (curses)
 - add alternate view method (raylib?)
 - support wrapping cells with input arg
