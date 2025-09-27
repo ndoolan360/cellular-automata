@@ -13,6 +13,22 @@ static void finish(int sig) {
   exit(sig);
 }
 
+static int parse_int_arg(char flag, int min) {
+  char *endp = NULL;
+  long l = -1;
+  if (!optarg || ((l = strtol(optarg, &endp, 10)), (endp && *endp))) {
+    fprintf(stderr, "invalid %c option %s - expecting a number\n", flag,
+            optarg ? optarg : "<NULL>");
+    exit(EXIT_FAILURE);
+  };
+  if (l < min) {
+    fprintf(stderr, "invalid %c option %s - must be greater than %d\n", flag,
+            optarg ? optarg : "<NULL>", min);
+    exit(EXIT_FAILURE);
+  }
+  return (int)l;
+}
+
 int main(int argc, char **argv) {
   signal(SIGINT, finish);
 
@@ -20,27 +36,25 @@ int main(int argc, char **argv) {
   int target_fps = 60;
   char *rule = "B3/S23";
   bool running = false;
+  size_t grid_size = 64;
   bool wrap = false;
 
   int opt;
-  char *flags = "df:r:sw";
+  char *flags = "df:g:r:sw";
   while ((opt = getopt(argc, argv, flags)) != -1) {
     switch (opt) {
     case 'd':
       show_debug = true;
       break;
-    case 'f': {
-      char *endp = NULL;
-      long l = -1;
-      if (!optarg || ((l = strtol(optarg, &endp, 10)), (endp && *endp))) {
-        fprintf(stderr, "invalid f option %s - expecting a number\n",
-                optarg ? optarg : "<NULL>");
-        exit(EXIT_FAILURE);
-      };
-      target_fps = (int)l;
+    case 'f':
+      target_fps = parse_int_arg('f', -1);
       break;
-    }
-    case 'r': rule = optarg; break;
+    case 'g':
+      grid_size = parse_int_arg('g', 1);
+      break;
+    case 'r':
+      rule = optarg;
+      break;
     case 's': // start
       running = true;
       break;
@@ -64,9 +78,8 @@ int main(int argc, char **argv) {
   mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
   printf("\033[?1003h\n"); // Report mouse movement events
 
-  QtNode *root = cells_init(32);
-  size_t cells_size = 32;
-  QtNode **cells = (QtNode **)calloc(cells_size, sizeof(QtNode *));
+  QtNode *root = cells_init(grid_size);
+  QtNode **cells = (QtNode **)calloc(grid_size, sizeof(QtNode *));
 
   ruleset ruleset = parse_rule(rule, wrap);
 
@@ -143,7 +156,7 @@ int main(int argc, char **argv) {
       }
 
       size_t cell_count = 0;
-      cells_get_all_alive_cells(root, &cells, &cells_size, &cell_count);
+      cells_get_all_alive_cells(root, &cells, &grid_size, &cell_count);
 
       for (size_t i = 0; i < cell_count; ++i) {
         QtNode *node = cells[i];
