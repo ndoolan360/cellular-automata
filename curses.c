@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 static void finish(int sig) {
   printf("\033[?1003l\n"); // Disable mouse movement events
@@ -12,8 +13,41 @@ static void finish(int sig) {
   exit(sig);
 }
 
-int main(void) {
+int main(int argc, char **argv) {
   signal(SIGINT, finish);
+
+  bool show_debug = false;
+  int target_fps = 60;
+  char *rule = "B3/S23";
+  bool running = false;
+
+  int opt;
+  char *flags = "df:r:s";
+  while ((opt = getopt(argc, argv, flags)) != -1) {
+    switch (opt) {
+    case 'd':
+      show_debug = true;
+      break;
+    case 'f': {
+      char *endp = NULL;
+      long l = -1;
+      if (!optarg || ((l = strtol(optarg, &endp, 10)), (endp && *endp))) {
+        fprintf(stderr, "invalid f option %s - expecting a number\n",
+                optarg ? optarg : "<NULL>");
+        exit(EXIT_FAILURE);
+      };
+      target_fps = (int)l;
+      break;
+    }
+    case 'r': rule = optarg; break;
+    case 's': // start
+      running = true;
+      break;
+    default:
+      fprintf(stderr, "Usage: %s [%s]\n", argv[0], flags);
+      exit(EXIT_FAILURE);
+    }
+  }
 
   initscr();
   keypad(stdscr, TRUE);
@@ -30,14 +64,10 @@ int main(void) {
   size_t cells_size = 32;
   QtNode **cells = (QtNode **)calloc(cells_size, sizeof(QtNode *));
 
-  bool show_debug = false;
-  bool running = false;
-  int target_fps = 60;
+  ruleset ruleset = parse_rule(rule);
 
   int camera_x = -1, camera_y = -1;
   MEVENT event = {0};
-
-  ruleset ruleset = parse_rule("");
 
   struct timespec last_frame = {0};
   for (;;) {
