@@ -49,12 +49,7 @@ static struct {
 } OFFSETS[8] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0},
                 {1, 0},   {-1, 1}, {0, 1},  {1, 1}};
 
-static bool SURVIVE[9] = {false, false, true,  true, false,
-                          false, false, false, false};
-static bool BIRTH[9] = {false, false, false, true, false,
-                        false, false, false, false};
-
-void gol_step(QtNode **root_ptr) {
+void gol_step(QtNode **root_ptr, ruleset rule) {
   QtNode *root = *root_ptr;
   QtNode *new = gol_init(root->size);
 
@@ -86,12 +81,12 @@ void gol_step(QtNode **root_ptr) {
         }
       }
 
-      if (BIRTH[neighbour_neighbours]) {
+      if (rule.birth[neighbour_neighbours]) {
         gol_set_cell_state(new, neighbour_x, neighbour_y, ALIVE);
       }
     }
 
-    if (SURVIVE[neighbours]) {
+    if (rule.survive[neighbours]) {
       gol_set_cell_state(new, node->x, node->y, ALIVE);
     }
   }
@@ -135,4 +130,14 @@ void gol_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
     gol_get_all_alive_cells(node->children[i], cells_ptr, cells_size_ptr,
                             cell_count_ptr);
   }
+}
+
+ruleset parse_rule(char *_) {
+  // TODO: implement properly
+
+  // B3/S23
+  return (ruleset){
+      .birth = {false, false, false, true, false, false, false, false, false},
+      .survive = {false, false, true, true, false, false, false, false, false},
+  };
 }

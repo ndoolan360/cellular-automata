@@ -4,9 +4,9 @@ An implementation of conways game of life.
 
 ### TODO
 
+- finish `ruleset parse_rule(char *rule_str)`...
 - control frame limit better (curses)
 - add alternate view method (raylib?)
-- add arbitrary cellular automata rule-set defined as input arg (e.g. B3/S23)
 - support wrapping cells with input arg
 - support resizing grid at runtime
 - support infinite grid

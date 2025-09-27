@@ -37,6 +37,8 @@ int main(void) {
   int camera_x = -1, camera_y = -1;
   MEVENT event = {0};
 
+  ruleset ruleset = parse_rule("");
+
   struct timespec last_frame = {0};
   for (;;) {
     struct timespec start = {0};
@@ -60,7 +62,7 @@ int main(void) {
       ++target_fps;
       break;
     case 'n':
-      gol_step(&root);
+      gol_step(&root, ruleset);
       break;
     case KEY_UP:
       --camera_y;
@@ -89,7 +91,7 @@ int main(void) {
     assert(target_fps != 0);
     if (elapsed >= (1.0 / target_fps)) {
       if (running) {
-        gol_step(&root);
+        gol_step(&root, ruleset);
       }
 
       clear();
@@ -110,8 +112,8 @@ int main(void) {
       gol_get_all_alive_cells(root, &cells, &cells_size, &cell_count);
 
       for (size_t i = 0; i < cell_count; ++i) {
-          QtNode *node = cells[i];
-          mvaddch(node->y - camera_y, node->x - camera_x, ACS_CKBOARD);
+        QtNode *node = cells[i];
+        mvaddch(node->y - camera_y, node->x - camera_x, ACS_CKBOARD);
       }
 
       mvprintw(0, 1, "q: quit | n: next | arrow-keys: pan | space: %s",
@@ -119,7 +121,8 @@ int main(void) {
       if (show_debug) {
         cell_data_t cell = gol_get_cell_data(root, event.x, event.y);
         mvprintw(2, 1, "grid: %zux%zu | mouse: %d,%d (0x%lx) | cell: %d",
-                 root->size, root->size, event.x + camera_x, event.y + camera_y, event.bstate, cell.state);
+                 root->size, root->size, event.x + camera_x, event.y + camera_y,
+                 event.bstate, cell.state);
         mvprintw(
             3, 1,
             "frametime: %.6f | target-fps: %d | '<': dec fps | '>': inc fps",
