@@ -1,17 +1,17 @@
-#include "gol.h"
+#include "cells.h"
 #include "grid.h"
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-QtNode *gol_init(size_t size) { return grid_init(size, sizeof(cell_data_t)); }
+QtNode *cells_init(size_t size) { return grid_init(size, sizeof(cell_data_t)); }
 
-void gol_free(QtNode *root) { grid_free_node(root); }
+void cells_free(QtNode *root) { grid_free_node(root); }
 
 cell_data_t DEFAULT = {.state = DEAD};
 
-cell_data_t gol_get_cell_data(QtNode *root, int x, int y) {
+cell_data_t cells_get_cell_data(QtNode *root, int x, int y) {
   QtNode *node = grid_get_cell(root, x, y);
   if (node == NULL || node->data == NULL) {
     return DEFAULT;
@@ -20,7 +20,7 @@ cell_data_t gol_get_cell_data(QtNode *root, int x, int y) {
   return *(cell_data_t *)node->data;
 }
 
-static void gol_set_cell_state(QtNode *root, int x, int y, cell_state_t state) {
+static void cells_set_cell_state(QtNode *root, int x, int y, cell_state_t state) {
   if (state == DEAD) {
     grid_remove_cell(root, x, y);
     return;
@@ -38,9 +38,9 @@ static void gol_set_cell_state(QtNode *root, int x, int y, cell_state_t state) {
   node->data = data;
 }
 
-void gol_toggle_cell_state(QtNode *root, int x, int y) {
-  cell_data_t current = gol_get_cell_data(root, x, y);
-  gol_set_cell_state(root, x, y, current.state == ALIVE ? DEAD : ALIVE);
+void cells_toggle_cell_state(QtNode *root, int x, int y) {
+  cell_data_t current = cells_get_cell_data(root, x, y);
+  cells_set_cell_state(root, x, y, current.state == ALIVE ? DEAD : ALIVE);
 }
 
 static struct {
@@ -49,14 +49,14 @@ static struct {
 } OFFSETS[8] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0},
                 {1, 0},   {-1, 1}, {0, 1},  {1, 1}};
 
-void gol_step(QtNode **root_ptr, ruleset rule) {
+void cells_step(QtNode **root_ptr, ruleset rule) {
   QtNode *root = *root_ptr;
-  QtNode *new = gol_init(root->size);
+  QtNode *new = cells_init(root->size);
 
   QtNode **cells = (QtNode **)calloc(32, sizeof(QtNode *));
   size_t cell_count = 0;
   size_t cells_size = 32;
-  gol_get_all_alive_cells(root, &cells, &cells_size, &cell_count);
+  cells_get_all_alive_cells(root, &cells, &cells_size, &cell_count);
 
   for (size_t i = 0; i < cell_count; i++) {
     QtNode *node = cells[i];
@@ -64,7 +64,7 @@ void gol_step(QtNode **root_ptr, ruleset rule) {
     for (int i = 0; i < 8; i++) {
       int neighbour_x = node->x + OFFSETS[i].dx;
       int neighbour_y = node->y + OFFSETS[i].dy;
-      cell_data_t neighbour = gol_get_cell_data(root, neighbour_x, neighbour_y);
+      cell_data_t neighbour = cells_get_cell_data(root, neighbour_x, neighbour_y);
       neighbours += neighbour.state;
 
       uint8_t neighbour_neighbours = 0;
@@ -75,29 +75,29 @@ void gol_step(QtNode **root_ptr, ruleset rule) {
             neighbour_neighbour_y == node->y) {
           neighbour_neighbours += 1;
         } else {
-          cell_data_t neighbour_neighbour = gol_get_cell_data(
+          cell_data_t neighbour_neighbour = cells_get_cell_data(
               root, neighbour_neighbour_x, neighbour_neighbour_y);
           neighbour_neighbours += neighbour_neighbour.state;
         }
       }
 
       if (rule.birth[neighbour_neighbours]) {
-        gol_set_cell_state(new, neighbour_x, neighbour_y, ALIVE);
+        cells_set_cell_state(new, neighbour_x, neighbour_y, ALIVE);
       }
     }
 
     if (rule.survive[neighbours]) {
-      gol_set_cell_state(new, node->x, node->y, ALIVE);
+      cells_set_cell_state(new, node->x, node->y, ALIVE);
     }
   }
 
   free(cells);
 
-  gol_free(*root_ptr);
+  cells_free(*root_ptr);
   *root_ptr = new;
 }
 
-void gol_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
+void cells_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
                              size_t *cells_size_ptr, size_t *cell_count_ptr) {
   if (node == NULL) {
     return;
@@ -127,7 +127,7 @@ void gol_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
   }
 
   for (int i = 0; i < 4; i++) {
-    gol_get_all_alive_cells(node->children[i], cells_ptr, cells_size_ptr,
+    cells_get_all_alive_cells(node->children[i], cells_ptr, cells_size_ptr,
                             cell_count_ptr);
   }
 }

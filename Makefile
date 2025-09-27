@@ -7,14 +7,14 @@ all: curses
 grid.o: grid.c
 	$(CC) $(CFLAGS) -c grid.c
 
-gol.o: gol.c
-	$(CC) $(CFLAGS) -c gol.c
+cells.o: cells.c
+	$(CC) $(CFLAGS) -c cells.c
 
 curses.o: curses.c
 	$(CC) $(CFLAGS) -c curses.c
 
-curses: curses.o gol.o grid.o
-	$(CC) -o curses curses.o gol.o grid.o $(LDFLAGS)
+curses: curses.o cells.o grid.o
+	$(CC) -o curses curses.o cells.o grid.o $(LDFLAGS)
 
 .PHONY: clean
 clean:

@@ -1,4 +1,4 @@
-#include "gol.h"
+#include "cells.h"
 #include "grid.h"
 #include <assert.h>
 #include <curses.h>
@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
   mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
   printf("\033[?1003h\n"); // Report mouse movement events
 
-  QtNode *root = gol_init(32);
+  QtNode *root = cells_init(32);
   size_t cells_size = 32;
   QtNode **cells = (QtNode **)calloc(cells_size, sizeof(QtNode *));
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
       ++target_fps;
       break;
     case 'n':
-      gol_step(&root, ruleset);
+      cells_step(&root, ruleset);
       break;
     case KEY_UP:
       --camera_y;
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
     case KEY_MOUSE:
       if (getmouse(&event) == OK) {
         if (event.bstate & (BUTTON1_PRESSED | BUTTON1_CLICKED)) {
-          gol_toggle_cell_state(root, event.x + camera_x, event.y + camera_y);
+          cells_toggle_cell_state(root, event.x + camera_x, event.y + camera_y);
         }
       }
     }
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
     assert(target_fps != 0);
     if (elapsed >= (1.0 / target_fps)) {
       if (running) {
-        gol_step(&root, ruleset);
+        cells_step(&root, ruleset);
       }
 
       clear();
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
       }
 
       size_t cell_count = 0;
-      gol_get_all_alive_cells(root, &cells, &cells_size, &cell_count);
+      cells_get_all_alive_cells(root, &cells, &cells_size, &cell_count);
 
       for (size_t i = 0; i < cell_count; ++i) {
         QtNode *node = cells[i];
@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
       mvprintw(0, 1, "q: quit | n: next | arrow-keys: pan | space: %s",
                running ? "pause" : "run");
       if (show_debug) {
-        cell_data_t cell = gol_get_cell_data(root, event.x, event.y);
+        cell_data_t cell = cells_get_cell_data(root, event.x, event.y);
         mvprintw(2, 1, "grid: %zux%zu | mouse: %d,%d (0x%lx) | cell: %d",
                  root->size, root->size, event.x + camera_x, event.y + camera_y,
                  event.bstate, cell.state);
@@ -166,6 +166,6 @@ int main(int argc, char **argv) {
 
 quit:
   free(cells);
-  gol_free(root);
+  cells_free(root);
   finish(0);
 }
