@@ -4,7 +4,6 @@ An implementation of conways game of life.
 
 ### TODO
 
-- move camera around (curses)
 - control frame limit better (curses)
 - add alternate view method (raylib?)
 - add arbitrary cellular automata rule-set defined as input arg (e.g. B3/S23)

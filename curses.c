@@ -30,6 +30,7 @@ int main(void) {
   bool show_debug = false;
   bool running = false;
   int target_fps = 60;
+  int camera_x = -1, camera_y = -1;
   MEVENT event = {0};
 
   struct timespec last_frame = {0};
@@ -57,10 +58,22 @@ int main(void) {
     case 'n':
       gol_step(&root);
       break;
+    case KEY_UP:
+      --camera_y;
+      break;
+    case KEY_DOWN:
+      ++camera_y;
+      break;
+    case KEY_LEFT:
+      --camera_x;
+      break;
+    case KEY_RIGHT:
+      ++camera_x;
+      break;
     case KEY_MOUSE:
       if (getmouse(&event) == OK) {
         if (event.bstate & (BUTTON1_PRESSED | BUTTON1_CLICKED)) {
-          gol_toggle_cell_state(root, event.x, event.y);
+          gol_toggle_cell_state(root, event.x + camera_x, event.y + camera_y);
         }
       }
     }
@@ -80,32 +93,31 @@ int main(void) {
       int min = -1;
       int max = root->size;
       chtype border_char = '.';
-      for (int y = 0; y <= max; ++y) {
-        mvaddch(y, min, border_char);
-        mvaddch(y, max, border_char);
+      for (int y = min; y <= max; ++y) {
+        mvaddch(y - camera_y, min - camera_x, border_char);
+        mvaddch(y - camera_y, max - camera_x, border_char);
       }
-      for (int x = 0; x <= max; ++x) {
-        mvaddch(min, x, border_char);
-        mvaddch(max, x, border_char);
+      for (int x = min; x <= max; ++x) {
+        mvaddch(min - camera_y, x - camera_x, border_char);
+        mvaddch(max - camera_y, x - camera_x, border_char);
       }
 
       for (int y = 0; y < (int)root->size; ++y) {
         for (int x = 0; x < (int)root->size; ++x) {
-          cell_data_t data = gol_get_cell_data(root, x, y);
+          cell_data_t data =
+              gol_get_cell_data(root, x, y);
           if (data.state == ALIVE) {
-            mvaddch(y, x, ACS_CKBOARD);
+            mvaddch(y - camera_y, x - camera_x, ACS_CKBOARD);
           }
         }
       }
 
-      mvprintw(0, 1, "q: quit | n: next | space: %s",
-               running ? "running" : "paused");
+      mvprintw(0, 1, "q: quit | n: next | arrow-keys: pan | space: %s",
+               running ? "pause" : "run");
       if (show_debug) {
-        int x = event.x;
-        int y = event.y;
-        cell_data_t cell = gol_get_cell_data(root, x, y);
+        cell_data_t cell = gol_get_cell_data(root, event.x, event.y);
         mvprintw(2, 1, "grid: %zux%zu | mouse: %d,%d (0x%lx) | cell: %d",
-                 root->size, root->size, x, y, event.bstate, cell.state);
+                 root->size, root->size, event.x + camera_x, event.y + camera_y, event.bstate, cell.state);
         mvprintw(
             3, 1,
             "frametime: %.6f | target-fps: %d | '<': dec fps | '>': inc fps",
