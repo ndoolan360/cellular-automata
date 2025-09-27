@@ -27,9 +27,13 @@ int main(void) {
   printf("\033[?1003h\n"); // Report mouse movement events
 
   QtNode *root = gol_init(32);
+  size_t cells_size = 32;
+  QtNode **cells = (QtNode **)calloc(cells_size, sizeof(QtNode *));
+
   bool show_debug = false;
   bool running = false;
   int target_fps = 60;
+
   int camera_x = -1, camera_y = -1;
   MEVENT event = {0};
 
@@ -102,14 +106,12 @@ int main(void) {
         mvaddch(max - camera_y, x - camera_x, border_char);
       }
 
-      for (int y = 0; y < (int)root->size; ++y) {
-        for (int x = 0; x < (int)root->size; ++x) {
-          cell_data_t data =
-              gol_get_cell_data(root, x, y);
-          if (data.state == ALIVE) {
-            mvaddch(y - camera_y, x - camera_x, ACS_CKBOARD);
-          }
-        }
+      size_t cell_count = 0;
+      gol_get_all_alive_cells(root, &cells, &cells_size, &cell_count);
+
+      for (size_t i = 0; i < cell_count; ++i) {
+          QtNode *node = cells[i];
+          mvaddch(node->y - camera_y, node->x - camera_x, ACS_CKBOARD);
       }
 
       mvprintw(0, 1, "q: quit | n: next | arrow-keys: pan | space: %s",
@@ -130,6 +132,7 @@ int main(void) {
   }
 
 quit:
+  free(cells);
   gol_free(root);
   finish(0);
 }

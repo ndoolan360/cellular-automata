@@ -54,7 +54,8 @@ static bool SURVIVE[9] = {false, false, true,  true, false,
 static bool BIRTH[9] = {false, false, false, true, false,
                         false, false, false, false};
 
-static QtNode *step(QtNode *root) {
+void gol_step(QtNode **root_ptr) {
+  QtNode *root = *root_ptr;
   QtNode *new = gol_init(root->size);
 
   QtNode **cells = (QtNode **)calloc(32, sizeof(QtNode *));
@@ -97,13 +98,8 @@ static QtNode *step(QtNode *root) {
 
   free(cells);
 
-  return new;
-}
-
-void gol_step(QtNode **root_ptr) {
-  QtNode *new_root = step(*root_ptr);
   gol_free(*root_ptr);
-  *root_ptr = new_root;
+  *root_ptr = new;
 }
 
 void gol_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
