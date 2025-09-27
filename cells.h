@@ -12,6 +12,7 @@ typedef struct {
 } cell_data_t;
 
 typedef struct {
+  bool wrap;
   bool birth[9];
   bool survive[9];
 } ruleset;
@@ -25,6 +26,6 @@ void cells_toggle_cell_state(QtNode *root, int x, int y);
 void cells_step(QtNode **root_ptr, ruleset rule);
 void cells_get_all_alive_cells(QtNode *root, QtNode ***cells_ptr, size_t *cells_size_ptr, size_t *cell_count_ptr);
 
-ruleset parse_rule(char *rule_str);
+ruleset parse_rule(char *rule_str, bool wrap);
 
 #endif // CELLS_H

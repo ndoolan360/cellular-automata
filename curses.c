@@ -20,9 +20,10 @@ int main(int argc, char **argv) {
   int target_fps = 60;
   char *rule = "B3/S23";
   bool running = false;
+  bool wrap = false;
 
   int opt;
-  char *flags = "df:r:s";
+  char *flags = "df:r:sw";
   while ((opt = getopt(argc, argv, flags)) != -1) {
     switch (opt) {
     case 'd':
@@ -42,6 +43,9 @@ int main(int argc, char **argv) {
     case 'r': rule = optarg; break;
     case 's': // start
       running = true;
+      break;
+    case 'w':
+      wrap = true;
       break;
     default:
       fprintf(stderr, "Usage: %s [%s]\n", argv[0], flags);
@@ -64,7 +68,7 @@ int main(int argc, char **argv) {
   size_t cells_size = 32;
   QtNode **cells = (QtNode **)calloc(cells_size, sizeof(QtNode *));
 
-  ruleset ruleset = parse_rule(rule);
+  ruleset ruleset = parse_rule(rule, wrap);
 
   int camera_x = -1, camera_y = -1;
   MEVENT event = {0};

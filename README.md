@@ -6,7 +6,6 @@ An implementation of conways game of life.
 
 - control frame limit better (curses)
 - add alternate view method (raylib?)
-- support wrapping cells with input arg
 - support resizing grid at runtime
 - support infinite grid
 

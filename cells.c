@@ -20,7 +20,8 @@ cell_data_t cells_get_cell_data(QtNode *root, int x, int y) {
   return *(cell_data_t *)node->data;
 }
 
-static void cells_set_cell_state(QtNode *root, int x, int y, cell_state_t state) {
+static void cells_set_cell_state(QtNode *root, int x, int y,
+                                 cell_state_t state) {
   if (state == DEAD) {
     grid_remove_cell(root, x, y);
     return;
@@ -64,13 +65,28 @@ void cells_step(QtNode **root_ptr, ruleset rule) {
     for (int i = 0; i < 8; i++) {
       int neighbour_x = node->x + OFFSETS[i].dx;
       int neighbour_y = node->y + OFFSETS[i].dy;
-      cell_data_t neighbour = cells_get_cell_data(root, neighbour_x, neighbour_y);
+
+      if (rule.wrap) {
+        neighbour_x = (neighbour_x + root->size) % root->size;
+        neighbour_y = (neighbour_y + root->size) % root->size;
+      }
+
+      cell_data_t neighbour =
+          cells_get_cell_data(root, neighbour_x, neighbour_y);
       neighbours += neighbour.state;
 
       uint8_t neighbour_neighbours = 0;
       for (int j = 0; j < 8; j++) {
         int neighbour_neighbour_x = neighbour_x + OFFSETS[j].dx;
         int neighbour_neighbour_y = neighbour_y + OFFSETS[j].dy;
+
+        if (rule.wrap) {
+          neighbour_neighbour_x =
+              (neighbour_neighbour_x + root->size) % root->size;
+          neighbour_neighbour_y =
+              (neighbour_neighbour_y + root->size) % root->size;
+        }
+
         if (neighbour_neighbour_x == node->x &&
             neighbour_neighbour_y == node->y) {
           neighbour_neighbours += 1;
@@ -98,7 +114,7 @@ void cells_step(QtNode **root_ptr, ruleset rule) {
 }
 
 void cells_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
-                             size_t *cells_size_ptr, size_t *cell_count_ptr) {
+                               size_t *cells_size_ptr, size_t *cell_count_ptr) {
   if (node == NULL) {
     return;
   }
@@ -128,12 +144,12 @@ void cells_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
 
   for (int i = 0; i < 4; i++) {
     cells_get_all_alive_cells(node->children[i], cells_ptr, cells_size_ptr,
-                            cell_count_ptr);
+                              cell_count_ptr);
   }
 }
 
-ruleset parse_rule(char *rule_str) {
-  ruleset out = {0};
+ruleset parse_rule(char *rule_str, bool wrap) {
+  ruleset out = {.wrap = wrap, .birth = {0}, .survive = {0}};
 
   size_t i = 0;
   char last_letter;
