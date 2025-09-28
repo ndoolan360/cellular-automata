@@ -3,6 +3,6 @@
 *.o
 
 !Makefile
-!Dockerfile
+!src
 
 .DS_Store

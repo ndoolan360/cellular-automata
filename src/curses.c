@@ -1,12 +1,12 @@
 #include "cells.h"
 #include "grid.h"
-#include "utils.c"
 #include <curses.h>
 #include <limits.h>
-#include <stdio.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 static void finish(int sig) {
   printf("\033[?1003l\n"); // Disable mouse movement events
@@ -14,7 +14,29 @@ static void finish(int sig) {
   exit(sig);
 }
 
-static void parse_args(int argc, char **argv, bool *debug, int *fps, size_t *grid_size, ruleset *rule) {
+static int parse_int_arg(char flag, int min, int max) {
+  char *endp = NULL;
+  long l = -1;
+  if (!optarg || ((l = strtol(optarg, &endp, 10)), (endp && *endp))) {
+    fprintf(stderr, "invalid %c option %s - expecting a number\n", flag,
+            optarg ? optarg : "<NULL>");
+    exit(EXIT_FAILURE);
+  };
+  if (l < min) {
+    fprintf(stderr, "invalid %c option: '%s' - must be greater than '%d'\n",
+            flag, optarg ? optarg : "<NULL>", min);
+    exit(EXIT_FAILURE);
+  }
+  if (l > max) {
+    fprintf(stderr, "invalid %c option: '%s' - must be less than '%d'\n", flag,
+            optarg ? optarg : "<NULL>", max);
+    exit(EXIT_FAILURE);
+  }
+  return (int)l;
+}
+
+static void parse_args(int argc, char **argv, bool *debug, int *fps,
+                       size_t *grid_size, ruleset *rule) {
   char *rule_str = "B3/S23";
   bool wrap = false;
 
@@ -68,7 +90,7 @@ int main(int argc, char **argv) {
   QtNode *root = cells_init(grid_size);
   QtNode **cells = (QtNode **)calloc(grid_size, sizeof(QtNode *));
 
-  int camera_x = -1, camera_y = -1;
+  int camera_x = 0, camera_y = 0;
   MEVENT event = {0};
 
   bool running = false;
@@ -115,6 +137,10 @@ int main(int argc, char **argv) {
           cells_toggle_cell_state(root, event.x + camera_x, event.y + camera_y);
         }
       }
+      break;
+    case KEY_RESIZE:
+      running = false;
+      break;
     }
 
     float elapsed = start.tv_sec - last_frame.tv_sec +

@@ -22,4 +22,5 @@ QtNode *grid_get_cell(QtNode *root, int x, int y);
 QtNode *grid_put_cell(QtNode *root, int x, int y, void *data);
 bool grid_remove_cell(QtNode *root, int x, int y);
 
+
 #endif // GRID_H

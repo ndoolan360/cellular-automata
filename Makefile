@@ -1,21 +1,22 @@
 CC ?= cc
 CFLAGS = -Wall -Wextra -Werror -std=c99 -pedantic -g
 LDFLAGS = -lm -lncurses
+SRC = src
 
-all: curses
+all: cell_curses
 
-grid.o: grid.c
-	$(CC) $(CFLAGS) -c grid.c
+grid.o: $(SRC)/grid.c
+	$(CC) $(CFLAGS) -c $(SRC)/grid.c
 
-cells.o: cells.c
-	$(CC) $(CFLAGS) -c cells.c
+cells.o: $(SRC)/cells.c
+	$(CC) $(CFLAGS) -c $(SRC)/cells.c
 
-curses.o: curses.c
-	$(CC) $(CFLAGS) -c curses.c
+curses.o: $(SRC)/curses.c
+	$(CC) $(CFLAGS) -c $(SRC)/curses.c
 
-curses: curses.o cells.o grid.o
-	$(CC) -o curses curses.o cells.o grid.o $(LDFLAGS)
+cell_curses: curses.o cells.o grid.o
+	$(CC) -o cell_curses curses.o cells.o grid.o $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -f *.o curses
+	rm -f *.o cell_curses
