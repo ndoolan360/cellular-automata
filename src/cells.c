@@ -123,9 +123,9 @@ void cells_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
   size_t cells_size = *cells_size_ptr;
   size_t cell_count = *cell_count_ptr;
 
-  // resize cells as needed
+  // resize cells array as needed
   if (cell_count >= cells_size) {
-    size_t new_size = cells_size * 2;
+    size_t new_size = cells_size << 1;
     void *tmp = realloc(cells, new_size * sizeof(QtNode *));
     if (tmp == NULL) {
       perror("realloc failed");

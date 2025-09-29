@@ -35,7 +35,7 @@ static int parse_int_arg(char flag, int min, int max) {
   return (int)l;
 }
 
-static void parse_args(int argc, char **argv, bool *debug, int *fps,
+static bool parse_args(int argc, char **argv, bool *debug, int *fps,
                        size_t *grid_size, ruleset *rule) {
   char *rule_str = "B3/S23";
   bool wrap = false;
@@ -60,11 +60,13 @@ static void parse_args(int argc, char **argv, bool *debug, int *fps,
       break;
     default:
       fprintf(stderr, "Usage: %s [d f:fps g:grid-size r:rule w]\n", argv[0]);
-      exit(EXIT_FAILURE);
+      return false;
     }
   }
 
   *rule = parse_rule(rule_str, wrap);
+
+  return true;
 }
 
 int main(int argc, char **argv) {
@@ -72,9 +74,11 @@ int main(int argc, char **argv) {
 
   bool show_debug = false;
   int target_fps = 60;
-  size_t grid_size = 64;
+  size_t grid_size = 16;
   ruleset ruleset;
-  parse_args(argc, argv, &show_debug, &target_fps, &grid_size, &ruleset);
+  if (!parse_args(argc, argv, &show_debug, &target_fps, &grid_size, &ruleset)) {
+    finish(1);
+  }
 
   initscr();
   keypad(stdscr, TRUE);
@@ -99,6 +103,7 @@ int main(int argc, char **argv) {
     struct timespec start = {0};
     clock_gettime(CLOCK_MONOTONIC, &start);
 
+    size_t pan_dist = 5;
     int c = getch();
     switch (c) {
     case 'q':
@@ -120,16 +125,16 @@ int main(int argc, char **argv) {
       cells_step(&root, ruleset);
       break;
     case KEY_UP:
-      camera_y -= 10;
+      camera_y -= pan_dist;
       break;
     case KEY_DOWN:
-      camera_y += 10;
+      camera_y += pan_dist;
       break;
     case KEY_LEFT:
-      camera_x -= 10;
+      camera_x -= pan_dist;
       break;
     case KEY_RIGHT:
-      camera_x += 10;
+      camera_x += pan_dist;
       break;
     case KEY_MOUSE:
       if (getmouse(&event) == OK) {
@@ -138,9 +143,14 @@ int main(int argc, char **argv) {
         }
       }
       break;
-    case KEY_RESIZE:
-      running = false;
-      break;
+    }
+
+    if (c == KEY_RESIZE || c == KEY_UP || c == KEY_DOWN ||
+                             c == KEY_LEFT || c == KEY_RIGHT) {
+    // auto resize to screen
+      int max_dim = (LINES + camera_y > COLS + camera_x) ? LINES + camera_y
+                                                         : COLS + camera_x;
+      grid_resize(&root, max_dim);
     }
 
     float elapsed = start.tv_sec - last_frame.tv_sec +
@@ -174,13 +184,17 @@ int main(int argc, char **argv) {
         mvaddch(node->y - camera_y, node->x - camera_x, ACS_CKBOARD);
       }
 
-      mvprintw(0, 1, "q: quit | n: next | arrow-keys: pan | space: %s",
+      mvprintw(0, 1,
+               "q: quit | n: next | arrow-keys: pan | space: %s",
                running ? "pause" : "run");
       if (show_debug) {
-        cell_data_t cell = cells_get_cell_data(root, event.x, event.y);
-        mvprintw(2, 1, "grid: %zux%zu | mouse: %d,%d (0x%lx) | cell: %d",
-                 root->size, root->size, event.x + camera_x, event.y + camera_y,
-                 event.bstate, cell.state);
+        cell_data_t cell =
+            cells_get_cell_data(root, event.x + camera_x, event.y + camera_y);
+        mvprintw(
+            2, 1,
+            "grid: %zux%zu | screen: %dx%d | mouse: %d,%d (0x%lx) | cell: %d",
+            root->size, root->size, LINES + camera_y, COLS + camera_x,
+            event.x + camera_x, event.y + camera_y, event.bstate, cell.state);
         mvprintw(
             3, 1,
             "frametime: %.6f | target-fps: %d | '<': dec fps | '>': inc fps",

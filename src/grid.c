@@ -59,8 +59,9 @@ static int8_t compute_coord_quadrant(QtNode *node, int x, int y) {
     return -1;
   }
 
-  size_t new_size = node->size / 2;
-  return (y < node->y + (int)new_size ? 0 : 2) + (x < node->x + (int)new_size ? 0 : 1);
+  size_t new_size = node->size >> 1;
+  return (y < node->y + (int)new_size ? 0 : 2) +
+         (x < node->x + (int)new_size ? 0 : 1);
 }
 
 QtNode *grid_get_cell(QtNode *root, int x, int y) {
@@ -78,7 +79,6 @@ QtNode *grid_get_cell(QtNode *root, int x, int y) {
   return node;
 }
 
-
 QtNode *grid_put_cell(QtNode *root, int x, int y, void *data) {
   if (!coords_in_node(root, x, y)) {
     return NULL;
@@ -87,11 +87,11 @@ QtNode *grid_put_cell(QtNode *root, int x, int y, void *data) {
   QtNode *node = root;
   while (node->size > 1) {
     int8_t quadrant = compute_coord_quadrant(node, x, y);
-    size_t new_size = node->size / 2;
+    size_t new_size = node->size >> 1;
 
     if (node->children[quadrant] == NULL) {
       int new_x = node->x + ((quadrant % 2) * new_size);
-      int new_y = node->y + ((quadrant / 2) * new_size);
+      int new_y = node->y + ((quadrant >> 1) * new_size);
 
       void *new_data = NULL;
       if (quadrant < 0) {
@@ -112,6 +112,10 @@ QtNode *grid_put_cell(QtNode *root, int x, int y, void *data) {
 }
 
 static bool has_children(QtNode *node) {
+  if (node == NULL) {
+    return false;
+  }
+
   for (int i = 0; i < 4; i++) {
     if (node->children[i] != NULL) {
       return true;
@@ -151,4 +155,42 @@ static bool grid_remove_cell_but_not_root(QtNode *real_root, QtNode *node,
 
 bool grid_remove_cell(QtNode *root, int x, int y) {
   return grid_remove_cell_but_not_root(root, root, x, y);
+}
+
+void grid_resize(QtNode **root_ptr, size_t new_size) {
+  QtNode *root = *root_ptr;
+
+  // shrink
+  while ((root->size >> 1) >= new_size && root->size > 2) {
+    if (!has_children(root)) {
+      root->size >>= 1;
+    } else {
+      // check if can shrink - don't want to lose cells
+      if (has_children(root->children[1]) || has_children(root->children[2]) ||
+          has_children(root->children[3])) {
+        break;
+      }
+
+      // shrink to top left quadrant (child 0)
+      *root_ptr = root->children[0];
+      root->children[0] = NULL;
+      grid_free_node(root);
+    }
+
+    root = *root_ptr;
+  }
+
+  // grow
+  while (root->size < new_size) {
+    if (root->size < 2) {
+      root->size = 2;
+    }
+
+    QtNode *new_root =
+        grid_init_node(0, 0, root->size << 1, NULL, root->data_size);
+    new_root->children[0] = root;
+    *root_ptr = new_root;
+
+    root = *root_ptr;
+  }
 }
