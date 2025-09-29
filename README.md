@@ -7,6 +7,7 @@ An implementation of conways game of life.
 - control frame limit better (curses)
 - add alternate view method (raylib?)
 - support infinite grid
+  - currently can only expand into the positive x and y.
 
 ### Optimisation thoughts
 

@@ -97,6 +97,11 @@ void cells_step(QtNode **root_ptr, ruleset rule) {
         }
       }
 
+      if (rule.infinite &&
+          (neighbour_x >= (int)new->size || neighbour_y >= (int)new->size)) {
+        grid_resize(&new, new->size << 1);
+      }
+
       if (rule.birth[neighbour_neighbours]) {
         cells_set_cell_state(new, neighbour_x, neighbour_y, ALIVE);
       }
@@ -148,8 +153,14 @@ void cells_get_all_alive_cells(QtNode *node, QtNode ***cells_ptr,
   }
 }
 
-ruleset parse_rule(char *rule_str, bool wrap) {
-  ruleset out = {.wrap = wrap, .birth = {0}, .survive = {0}};
+ruleset parse_rule(char *rule_str, bool wrap, bool infinite) {
+  if (infinite && wrap) {
+    perror("Can't set both wrap plane and infinite plane");
+    exit(EXIT_FAILURE);
+  }
+
+  ruleset out = {
+      .wrap = wrap, .infinite = infinite, .birth = {0}, .survive = {0}};
 
   size_t i = 0;
   char last_letter;

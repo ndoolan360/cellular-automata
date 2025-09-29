@@ -39,9 +39,10 @@ static bool parse_args(int argc, char **argv, bool *debug, int *fps,
                        size_t *grid_size, ruleset *rule) {
   char *rule_str = "B3/S23";
   bool wrap = false;
+  bool infinite = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "df:g:r:w")) != -1) {
+  while ((opt = getopt(argc, argv, "df:g:ir:w")) != -1) {
     switch (opt) {
     case 'd':
       *debug = true;
@@ -54,17 +55,19 @@ static bool parse_args(int argc, char **argv, bool *debug, int *fps,
       break;
     case 'r':
       rule_str = optarg;
+    case 'i':
+      infinite = true;
       break;
     case 'w':
       wrap = true;
       break;
     default:
-      fprintf(stderr, "Usage: %s [d f:fps g:grid-size r:rule w]\n", argv[0]);
+      fprintf(stderr, "Usage: %s [d f:fps g:grid-size i r:rule w]\n", argv[0]);
       return false;
     }
   }
 
-  *rule = parse_rule(rule_str, wrap);
+  *rule = parse_rule(rule_str, wrap, infinite);
 
   return true;
 }
@@ -74,7 +77,7 @@ int main(int argc, char **argv) {
 
   bool show_debug = false;
   int target_fps = 60;
-  size_t grid_size = 16;
+  size_t grid_size = 64;
   ruleset ruleset;
   if (!parse_args(argc, argv, &show_debug, &target_fps, &grid_size, &ruleset)) {
     finish(1);
