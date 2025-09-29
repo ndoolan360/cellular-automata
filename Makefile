@@ -2,21 +2,22 @@ CC ?= cc
 CFLAGS = -Wall -Wextra -Werror -std=c99 -pedantic -g
 LDFLAGS = -lm -lncurses
 SRC = src
+BUILD = build
+SRCS = $(wildcard $(SRC)/*.c)
+OBJS = $(patsubst $(SRC)/%.c,$(BUILD)/%.o,$(SRCS))
+TARGET = cellular-automata
 
-all: cellular-automata
+all: $(BUILD) $(TARGET)
 
-grid.o: $(SRC)/grid.c
-	$(CC) $(CFLAGS) -c $(SRC)/grid.c
+$(BUILD):
+	mkdir -p $@
 
-cells.o: $(SRC)/cells.c
-	$(CC) $(CFLAGS) -c $(SRC)/cells.c
+$(BUILD)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-curses.o: $(SRC)/curses.c
-	$(CC) $(CFLAGS) -c $(SRC)/curses.c
-
-cellular-automata: curses.o cells.o grid.o
-	$(CC) -o cellular-automata curses.o cells.o grid.o $(LDFLAGS)
+$(TARGET): $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -f *.o cellular-automata
+	rm -rf $(BUILD) $(TARGET)

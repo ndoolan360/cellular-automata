@@ -148,8 +148,8 @@ int main(int argc, char **argv) {
       break;
     }
 
-    if (c == KEY_RESIZE || c == KEY_UP || c == KEY_DOWN ||
-                             c == KEY_LEFT || c == KEY_RIGHT) {
+    if (ruleset.infinite && (c == KEY_RESIZE || c == KEY_UP || c == KEY_DOWN ||
+                             c == KEY_LEFT || c == KEY_RIGHT)) {
     // auto resize to screen
       int max_dim = (LINES + camera_y > COLS + camera_x) ? LINES + camera_y
                                                          : COLS + camera_x;
